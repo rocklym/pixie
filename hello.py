@@ -14,7 +14,7 @@ db = SQLAlchemy(app)
 app.config['SECRET_KEY'] = "benben is chou benben"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://rock:11111@localhost/pixie_dev'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
 class NameForm(FlaskForm):
     name = StringField("What's your name?", validators=[DataRequired()])
@@ -25,7 +25,7 @@ class Role(db.Model):
     __tablename__ = 'role'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(20), unique=True)
-    users = db.relationship('User', backref='role')
+    users = db.relationship('User', backref='role', lazy='dynamic')
 
     def __repr__(self):
         return '<Role %r>' % self.name
