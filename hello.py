@@ -4,17 +4,41 @@ from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 manager = Manager(app)
 bootstrap = Bootstrap(app)
+db = SQLAlchemy(app)
 
 app.config['SECRET_KEY'] = "benben is chou benben"
-
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://rock:11111@localhost/pixie_dev'
+app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 class NameForm(FlaskForm):
     name = StringField("What's your name?", validators=[DataRequired()])
     submit = SubmitField('Submit')
+
+
+class Role(db.Model):
+    __tablename__ = 'role'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20), unique=True)
+    users = db.relationship('User', backref='role')
+
+    def __repr__(self):
+        return '<Role %r>' % self.name
+
+
+class User(db.Model):
+    __tablename__ = 'user'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(20), unique=True, index=True)
+    role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
+
+    def __repr__(self):
+        return '<User %r>' % self.username
 
 
 @app.route('/', methods=['GET', 'POST'])
