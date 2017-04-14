@@ -1,1 +1,1 @@
-We've got a new friend {{ user.username }}!
+We've got a new friend, {{ user.username }}!
