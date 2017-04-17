@@ -31,6 +31,9 @@
                 {% else %}
                 <li><a href="{{ url_for('auth.login' ) }}">Sign In</a></li>
                 {% endif %}
+                <ul class="dropdown-menu">
+                    <li><a href="{{ url_for('auth.change_password') }}">Change Password</a></li>
+                </ul>
             </ul>
         </div>
     </div>

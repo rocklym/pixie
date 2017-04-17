@@ -19,7 +19,7 @@ class RegistrationForm(FlaskForm):
                                                           'Username must have only letters,numbers or underscores')])
     password = PasswordField('Password', validators=[DataRequired(), Length(6, 64)])
     password2 = PasswordField('Password', validators=[DataRequired(), Length(6, 64), EqualTo('password',
-                              message='Passwords must match.')])
+                                                                                             message='Passwords must match.')])
     submit = SubmitField('Register')
 
     def validate_email(self, field):
@@ -29,3 +29,11 @@ class RegistrationForm(FlaskForm):
     def validate_usernamel(self, field):
         if User.query.filter_by(username=field.data).first():
             raise ValidationError('Username already in use.')
+
+
+class ChangePasswordForm(FlaskForm):
+    old_password = StringField('Old Password', validators=[DataRequired()])
+    password = StringField('New Password', validators=[DataRequired()])
+    password2 = StringField('Confirm your password',
+                            validators=[DataRequired(), EqualTo(password, message='Password must match!')])
+    submit = SubmitField('Submit')
