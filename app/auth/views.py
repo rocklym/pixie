@@ -81,6 +81,7 @@ def resend_confirmation():
 
 
 @auth.route('/change-password', methods=['GET', 'POST'])
+@login_required
 def change_password():
     form = ChangePasswordForm()
     if form.validate_on_submit():
@@ -91,4 +92,4 @@ def change_password():
             return redirect(url_for('main.index'))
         else:
             flash('Invalid password!')
-        return render_template('auth/change_password.html', form=form)
+    return render_template('auth/change_password.html', form=form)

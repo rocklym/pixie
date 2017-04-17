@@ -32,8 +32,8 @@ class RegistrationForm(FlaskForm):
 
 
 class ChangePasswordForm(FlaskForm):
-    old_password = StringField('Old Password', validators=[DataRequired()])
-    password = StringField('New Password', validators=[DataRequired()])
-    password2 = StringField('Confirm your password',
-                            validators=[DataRequired(), EqualTo(password, message='Password must match!')])
-    submit = SubmitField('Submit')
+    old_password = PasswordField('Old Password', validators=[DataRequired()])
+    password = PasswordField('New Password', validators=[DataRequired()])
+    password2 = PasswordField('Confirm your password',
+                              validators=[DataRequired(), EqualTo('password', message='Password must match!')])
+    submit = SubmitField('Update Password')
