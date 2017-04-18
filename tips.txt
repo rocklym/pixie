@@ -2,7 +2,6 @@ export MAIL_USERNAME=rocklym@163.com
 export MAIL_PASSWORD=abc123
 export PIXIE_ADMIN=rocklym@163.com
 
-export SECRET_KEY=benben
 
 export PIXIE_CONFIG=
 
