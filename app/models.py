@@ -7,11 +7,42 @@ from flask import current_app
 from . import db
 
 
+class Permission(object):
+    FOLLOW = 0x01
+    COMMENT = 0x02
+    WRITE_ARTICLE = 0x04
+    MODERATE_COMMENT = 0x08
+    ADMINISTER = 0x80
+
+
 class Role(db.Model):
     __tablename__ = 'role'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True)
+    default = db.Column(db.Boolean, default=False, index=True)
+    permission = db.Column(db.Integer)
     users = db.relationship('User', backref='role', lazy='dynamic')
+
+    @staticmethod
+    def insert_roles():
+        roles = {
+            'User': (Permission.FOLLOW |
+                     Permission.COMMENT |
+                     Permission.WRITE_ARTICLE, True),
+            'Moderator': (Permission.FOLLOW |
+                          Permission.COMMENT |
+                          Permission.WRITE_ARTICLE |
+                          Permission.MODERATE_COMMENT, False),
+            'Administrator': (0xff, False)
+        }
+        for r in roles:
+            role = Role.query.filter_by(name=r).first()
+            if role is None:
+                role = Role(name=r)
+            role.permission = roles[r][0]
+            role.default = roles[r][1]
+            db.session.add(role)
+        db.session.commit()
 
     def __repr__(self):
         return '<Role %r>' % self.name
@@ -25,6 +56,14 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))
     confirmed = db.Column(db.Boolean, default=False)
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
+
+    def __init__(self, **kwargs):
+        super(User, self).__init__(**kwargs)
+        if self.role is None:
+            if self.email == current_app.config['PIXIE_ADMIN']:
+                self.role = Role.query.filter_by(permission=0xff).first()
+            if self.role is None:
+                self.role = Role.query.filter_by(default=True).first()
 
     def __repr__(self):
         return '<User %r>' % self.username
