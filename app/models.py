@@ -1,6 +1,6 @@
 from . import db
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import UserMixin
+from flask_login import UserMixin, AnonymousUserMixin
 from . import login_manager
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app
@@ -20,7 +20,7 @@ class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True)
     default = db.Column(db.Boolean, default=False, index=True)
-    permission = db.Column(db.Integer)
+    permissions = db.Column(db.Integer)
     users = db.relationship('User', backref='role', lazy='dynamic')
 
     @staticmethod
@@ -39,7 +39,7 @@ class Role(db.Model):
             role = Role.query.filter_by(name=r).first()
             if role is None:
                 role = Role(name=r)
-            role.permission = roles[r][0]
+            role.permissions = roles[r][0]
             role.default = roles[r][1]
             db.session.add(role)
         db.session.commit()
@@ -126,6 +126,23 @@ class User(UserMixin, db.Model):
         self.email = data.get('new_email')
         db.session.add(self)
         return True
+
+    def can(self, permissions):
+        return self.role is not None and (self.role.permissions & permissions == permissions)
+
+    def is_administrator(self):
+        return self.can(Permission.ADMINISTER)
+
+
+class AnoymousUser(AnonymousUserMixin):
+    def can(self, permissions):
+        return False
+
+    def is_administrator(self):
+        return False
+
+
+login_manager.anonymous_user = AnoymousUser
 
 
 @login_manager.user_loader

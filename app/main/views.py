@@ -2,8 +2,9 @@ from flask import session, render_template, redirect, url_for
 from .forms import NameForm
 from . import main
 from .. import db
-from ..models import User
-
+from ..models import User, Permission
+from ..decorators import permission_required, admin_required
+from flask_login import login_required
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -21,3 +22,16 @@ def index():
         form.name.data = ''
         return redirect(url_for('.index'))
     return render_template('index.html', form=form, name=session.get('name'), known=session.get('known', False))
+
+
+@main.route('/admin')
+@login_required
+@admin_required
+def for_admins_only():
+    return 'Only Pixie can see!'
+
+@main.route('/moderator')
+@login_required
+@permission_required(Permission.MODERATE_COMMENT)
+def for_moderators_only():
+    return 'Lalala, I\'m a keyboard hero.'
