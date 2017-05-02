@@ -11,7 +11,7 @@ from datetime import datetime
 class Permission(object):
     FOLLOW = 0x01
     COMMENT = 0x02
-    WRITE_ARTICLE = 0x04
+    WRITE_ARTICLES = 0x04
     MODERATE_COMMENT = 0x08
     ADMINISTER = 0x80
 
@@ -29,10 +29,10 @@ class Role(db.Model):
         roles = {
             'User': (Permission.FOLLOW |
                      Permission.COMMENT |
-                     Permission.WRITE_ARTICLE, True),
+                     Permission.WRITE_ARTICLES, True),
             'Moderator': (Permission.FOLLOW |
                           Permission.COMMENT |
-                          Permission.WRITE_ARTICLE |
+                          Permission.WRITE_ARTICLES |
                           Permission.MODERATE_COMMENT, False),
             'Administrator': (0xff, False)
         }
@@ -62,12 +62,13 @@ class User(UserMixin, db.Model):
     about_me = db.Column(db.TEXT())
     member_since = db.Column(db.DateTime(), default=datetime.utcnow)
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
+    posts = db.relationship('Post', backref='author', lazy='dynamic')
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
         if self.role is None:
             if self.email == current_app.config['PIXIE_ADMIN']:
-                self.role = Role.query.filter_by(permission=0xff).first()
+                self.role = Role.query.filter_by(permissions=0xff).first()
             if self.role is None:
                 self.role = Role.query.filter_by(default=True).first()
 
@@ -158,3 +159,11 @@ login_manager.anonymous_user = AnoymousUser
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+class Post(db.Model):
+    __tablename__ = 'post'
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
