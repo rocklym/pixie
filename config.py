@@ -10,6 +10,9 @@ class Config(object):
     PIXIE_MAIL_SUBJECT_PREFIX = '[PIXIE]'
     PIXIE_MAIL_SENDER = 'Pixie Admin <rocklym@163.com>'
     PIXIE_ADMIN = os.environ.get('PIXIE_ADMIN')
+    PIXIE_POSTS_PER_PAGE = 20
+    PIXIE_FOLLOWERS_PER_PAGE = 50
+    PIXIE_COMMENTS_PER_PAGE = 30
 
     @staticmethod
     def init_app(app):

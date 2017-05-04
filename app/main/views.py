@@ -1,8 +1,8 @@
-from flask import render_template, redirect, url_for, abort, flash, request, make_response
-from .forms import EditProfileForm, EditProfileAdminForm, PostForm
+from flask import render_template, redirect, url_for, abort, flash, request, make_response, current_app
+from .forms import EditProfileForm, EditProfileAdminForm, PostForm, CommentForm
 from . import main
 from .. import db
-from ..models import User, Role, Permission, Post
+from ..models import User, Role, Permission, Post, Comment
 from ..decorators import admin_required, permission_required
 from flask_login import login_required, current_user
 
@@ -11,9 +11,8 @@ from flask_login import login_required, current_user
 def index():
     form = PostForm()
     if current_user.can(Permission.WRITE_ARTICLES) and form.validate_on_submit():
-        post = Post()
-        post.body = form.body.data
-        post.author = current_user._get_current_object()
+        post = Post(body=form.body.data,
+                    author=current_user._get_current_object())
         db.session.add(post)
         return redirect(url_for('.index'))
     page = request.args.get('page', 1, type=int)
@@ -24,7 +23,9 @@ def index():
         query = current_user.followed_posts
     else:
         query = Post.query
-    pagination = query.order_by(Post.timestamp.desc()).paginate(page, per_page=25, error_out=False)
+    pagination = query.order_by(Post.timestamp.desc()).paginate(page,
+                                                                per_page=current_app.config['PIXIE_POSTS_PER_PAGE'],
+                                                                error_out=False)
     posts = pagination.items
     return render_template('index.html', form=form, posts=posts, show_followed=show_followed, pagination=pagination)
 
@@ -82,10 +83,25 @@ def edit_profile_admin(id):
     return render_template('edit_profile.html', form=form, user=user)
 
 
-@main.route('/post/<int:id>')
+@main.route('/post/<int:id>', methods=['GET', 'POST'])
 def post(id):
     post = Post.query.get_or_404(id)
-    return render_template('post.html', posts=[post])
+    form = CommentForm()
+    if form.validate_on_submit():
+        comment = Comment(body=form.body.data,
+                          post=post,
+                          author=current_user._get_current_object())
+        db.session.add(comment)
+        flash('Your comment has been published.')
+        return redirect(url_for('.post', id=post.id, page=-1))
+    page = request.args.get('page', 1, type=int)
+    if page == -1:
+        page = (post.comments.count() - 1) / current_app.config['PIXIE_COMMENTS_PER_PAGE'] + 1
+    pagination = post.comments.order_by(Comment.timestamp.asc()).paginate(
+        page, per_page=current_app.config['PIXIE_COMMENTS_PER_PAGE'], error_out=False
+    )
+    comments = pagination.items
+    return render_template('post.html', posts=[post], form=form, comments=comments, pagination=pagination)
 
 
 @main.route('/edit/<int:id>', methods=['GET', 'POST'])
@@ -143,7 +159,7 @@ def followers(username):
         flash('Invalid user.')
         return redirect(url_for('.index'))
     page = request.args.get('page', 1, type=int)
-    pagination = user.followers.paginate(page, per_page=25, error_out=False)
+    pagination = user.followers.paginate(page, per_page=current_app.config['PIXIE_FOLLOWERS_PER_PAGE'], error_out=False)
     follows = [{'user': item.follower,
                 'timestamp': item.timestamp}
                for item in pagination.items]
@@ -158,7 +174,7 @@ def followed_by(username):
         flash('Invalid user.')
         return redirect(url_for('.index'))
     page = request.args.get('page', 1, type=int)
-    pagination = user.followed.paginate(page, per_page=25, error_out=False)
+    pagination = user.followed.paginate(page, per_page=current_app.config['PIXIE_FOLLOWERS_PER_PAGE'], error_out=False)
     follows = [{'user': item.followed,
                 'timestamp': item.timestamp}
                for item in pagination.items]
