@@ -4,7 +4,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config(object):
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'benben'
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'benben is choubenben'
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     PIXIE_MAIL_SUBJECT_PREFIX = '[PIXIE]'

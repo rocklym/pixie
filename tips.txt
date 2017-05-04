@@ -3,7 +3,7 @@ export MAIL_PASSWORD=abc123
 export PIXIE_ADMIN=rocklym@163.com
 
 
-export PIXIE_CONFIG=
+export PIXIE_CONFIG=Nothing to say
 
 
 from hello import db
