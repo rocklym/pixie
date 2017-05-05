@@ -214,8 +214,21 @@ class User(UserMixin, db.Model):
     def is_followed_by(self, user):
         return self.followers.filter_by(follower_id=user.id).first() is not None
 
+    def generate_auth_token(self, expiration):
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        return s.dumps({'id': self.id})
 
-class AnoymousUser(AnonymousUserMixin):
+    @staticmethod
+    def verify_auth_token(token):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except:
+            return None
+        return User.query.get(data['id'])
+
+
+class AnonymousUser(AnonymousUserMixin):
     def can(self, permissions):
         return False
 
@@ -223,7 +236,7 @@ class AnoymousUser(AnonymousUserMixin):
         return False
 
 
-login_manager.anonymous_user = AnoymousUser
+login_manager.anonymous_user = AnonymousUser
 
 
 @login_manager.user_loader
